@@ -123,7 +123,7 @@ class Redshift(PostgreSQL):
         schema_dict = self._normalize_schema_info(rows)
         return schema_dict
 
-    def select_svv_columns_schema(self, path: DbPath) -> Dict[str, tuple]:
+    def select_svv_columns_schema(self, path: DbPath) -> str:
         database, schema, table = self._normalize_table_path(path)
 
         db_clause = ""
@@ -144,7 +144,7 @@ class Redshift(PostgreSQL):
             where table_name = '{table.lower()}' and table_schema = '{schema.lower()}'
             """
             + db_clause
-        )
+        ).strip()
 
     def query_svv_columns(self, path: DbPath) -> Dict[str, RawColumnInfo]:
         rows = self.query(self.select_svv_columns_schema(path), list)
@@ -200,9 +200,9 @@ class Redshift(PostgreSQL):
                 return self.query_external_table_schema(path)
             except RuntimeError:
                 try:
-                    return self.query_pg_get_cols(path)
-                except Exception:
                     return self.query_svv_columns(path)
+                except Exception:
+                    return self.query_pg_get_cols(path)
 
     def _normalize_table_path(self, path: DbPath) -> DbPath:
         if len(path) == 1:
